@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Número a ASCII</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef1ee; --panel:#fbfcfb; --ink:#1d2a24; --muted:#5d6b64; --line:#c9d2cc; --accent:#1f6f54; --out-bg:#14201a; --out-ink:#9fe6c1;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101613; --panel:#18211c; --ink:#e4ece7; --muted:#97a69d; --line:#2c3a33; --accent:#5fcf9f; --out-bg:#0a100d; --out-ink:#9fe6c1; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101613; --panel:#18211c; --ink:#e4ece7; --muted:#97a69d; --line:#2c3a33; --accent:#5fcf9f; --out-bg:#0a100d; --out-ink:#9fe6c1; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",Verdana,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:32px 16px}
+main{width:100%;max-width:720px}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:2rem;margin:0 0 6px;font-weight:700}
+p.sub{margin:0 0 24px;color:var(--muted);line-height:1.5}
+label{display:block;font-weight:700;margin-bottom:8px}
+input{width:100%;font:inherit;font-size:1.6rem;padding:12px 14px;border:2px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+input:focus{outline:3px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+.hint{min-height:1.4em;margin:8px 0 20px;color:var(--muted);font-size:.9rem}
+.out-wrap{border:2px solid var(--line);border-radius:6px;background:var(--out-bg)}
+.out-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);color:#c9d9cf;font-size:.9rem}
+button{font:inherit;font-size:.9rem;padding:6px 12px;border-radius:5px;border:1px solid var(--accent);background:transparent;color:var(--out-ink);cursor:pointer}
+button:hover{background:rgba(159,230,193,.15)}
+button:focus-visible{outline:3px solid var(--out-ink);outline-offset:2px}
+pre{margin:0;padding:16px;overflow-x:auto;min-height:9em;color:var(--out-ink);font-family:"Courier New",Courier,monospace;font-size:1rem;line-height:1.1}
+pre.empty{color:#6f8478;font-style:italic}
+</style>
+</head>
+<body>
+<main>
+  <h1>Número a ASCII</h1>
+  <p class="sub">Escribe un número y verás el mismo número dibujado con caracteres ASCII.</p>
+
+  <label for="num">Tu número</label>
+  <input id="num" type="text" inputmode="numeric" autocomplete="off" placeholder="Por ejemplo: 2025" maxlength="30">
+  <div class="hint" id="hint" aria-live="polite"></div>
+
+  <div class="out-wrap">
+    <div class="out-head"><span>Resultado en ASCII</span><button id="copy" type="button">Copiar</button></div>
+    <pre id="out" class="empty">Aquí aparecerá tu número.</pre>
+  </div>
+</main>
+
+<script>
+const F = {
+'0':[" ___ ","/ _ \\","| | | |","| | | |","| |_| |"," \\___/ "],
+'1':["  _ "," / |"," | |"," | |"," | |"," |_|"],
+'2':[" ____  ","|___ \\ ","  __) |"," / __/ ","|_____|","       "],
+'3':[" _____ ","|___ / ","  |_ \\ "," ___) |","|____/ ","       "],
+'4':[" _  _   ","| || |  ","| || |_ ","|__   _|","   |_|  ","        "],
+'5':[" ____  ","| ___| ","|___ \\ "," ___) |","|____/ ","       "],
+'6':["  __   "," / /_  ","| '_ \\ ","| (_) |"," \\___/ ","       "],
+'7':[" _____ ","|___  |","   / / ","  / /  "," /_/   ","       "],
+'8':["  ___  "," ( _ ) "," / _ \\ ","| (_) |"," \\___/ ","       "],
+'9':["  ___  "," / _ \\ ","| (_) |"," \\__, |","   /_/ ","       "],
+'-':["       ","       "," _____ ","|_____|","       ","       "],
+'.':["   ","   ","   "," _ ","(_)","   "],
+' ':["   ","   ","   ","   ","   ","   "]
+};
+// Corrección de ceros: ancho uniforme
+F['0']=["  ___  "," / _ \\ ","| | | |","| |_| |"," \\___/ ","       "];
+
+const input=document.getElementById('num'), out=document.getElementById('out'), hint=document.getElementById('hint');
+
+function render(){
+  const raw=input.value.trim();
+  const clean=raw.replace(/[^0-9.\- ]/g,'');
+  hint.textContent = clean!==raw ? 'Solo se muestran dígitos, punto y signo menos; el resto se ha ignorado.' : '';
+  if(!clean){ out.className='empty'; out.textContent='Aquí aparecerá tu número.'; return; }
+  const rows=['','','','','',''];
+  for(const ch of clean){
+    const g=F[ch]; if(!g) continue;
+    for(let i=0;i<6;i++) rows[i]+=g[i];
+  }
+  out.className='';
+  out.textContent=rows.join('\n');
+}
+input.addEventListener('input',render);
+
+document.getElementById('copy').addEventListener('click',async e=>{
+  if(out.className==='empty') return;
+  try{ await navigator.clipboard.writeText(out.textContent); e.target.textContent='Copiado'; }
+  catch(_){ e.target.textContent='No se pudo copiar'; }
+  setTimeout(()=>e.target.textContent='Copiar',1500);
+});
+</script>
+</body>
+</html>
